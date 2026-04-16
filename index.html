@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SyncSpend — Master Your Money</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --bg-card: rgba(255,255,255,0.72);
+      --bg-nav: rgba(245,245,247,0.78);
+      --fg: #1d1d1f;
+      --fg-muted: #6e6e73;
+      --accent: #0071e3;
+      --accent-glow: rgba(0,113,227,0.35);
+      --accent2: #30d158;
+      --border: rgba(0,0,0,0.08);
+      --shadow: 0 8px 40px rgba(0,0,0,0.10);
+      --shadow-card: 0 2px 24px rgba(0,0,0,0.07);
+      --radius: 20px;
+    }
+    .dark {
+      --bg: #0a0a0f;
+      --bg-card: rgba(28,28,35,0.80);
+      --bg-nav: rgba(10,10,15,0.78);
+      --fg: #f5f5f7;
+      --fg-muted: #98989f;
+      --accent: #2997ff;
+      --accent-glow: rgba(41,151,255,0.30);
+      --border: rgba(255,255,255,0.09);
+      --shadow: 0 8px 40px rgba(0,0,0,0.55);
+      --shadow-card: 0 2px 24px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      transition: background 0.4s, color 0.4s;
+      overflow-x: hidden;
+    }
+
+    /* ─── GRAIN TEXTURE ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+    }
+
+    /* ─── GLASSMORPHISM NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--bg-nav);
+      backdrop-filter: saturate(180%) blur(22px);
+      -webkit-backdrop-filter: saturate(180%) blur(22px);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.4s;
+    }
+
+    /* ─── CARDS ─── */
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+    }
+
+    /* ─── ACCENT BUTTON ─── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+      padding: 15px 32px; border-radius: 980px;
+      border: none; cursor: pointer;
+      box-shadow: 0 0 0 0 var(--accent-glow);
+      transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s, filter 0.22s;
+      text-decoration: none;
+    }
+    .btn-primary:hover {
+      transform: scale(1.045);
+      box-shadow: 0 0 0 14px var(--accent-glow);
+      filter: brightness(1.1);
+    }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent;
+      color: var(--accent);
+      font-size: 15px; font-weight: 500;
+      padding: 12px 24px; border-radius: 980px;
+      border: 1.5px solid var(--accent);
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover { background: var(--accent); color: #fff; }
+
+    /* ─── DISPLAY FONT ─── */
+    .display { font-family: "Instrument Serif", Georgia, serif; }
+
+    /* ─── GRADIENT HEADLINE ─── */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ─── HERO BACKGROUND ORBS ─── */
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(90px);
+      pointer-events: none; opacity: 0.55;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 520px; height: 520px; background: radial-gradient(circle, #0071e3 0%, transparent 70%); top: -120px; right: -80px; animation-delay: 0s; }
+    .orb-2 { width: 380px; height: 380px; background: radial-gradient(circle, #30d158 0%, transparent 70%); bottom: 60px; left: -100px; animation-delay: -5s; }
+    .orb-3 { width: 280px; height: 280px; background: radial-gradient(circle, #bf5af2 0%, transparent 70%); top: 40%; left: 40%; animation-delay: -9s; }
+    .dark .orb-1 { opacity: 0.35; }
+    .dark .orb-2 { opacity: 0.28; }
+    .dark .orb-3 { opacity: 0.22; }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px,20px) scale(1.07); }
+    }
+
+    /* ─── SCROLL REVEAL ─── */
+    .reveal {
+      opacity: 0; transform: translateY(36px);
+      transition: opacity 0.72s cubic-bezier(.22,1,.36,1), transform 0.72s cubic-bezier(.22,1,.36,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.10s; }
+    .reveal-delay-2 { transition-delay: 0.22s; }
+    .reveal-delay-3 { transition-delay: 0.34s; }
+    .reveal-delay-4 { transition-delay: 0.46s; }
+
+    /* ─── MOCK PHONE ─── */
+    .phone-frame {
+      width: 220px; height: 440px;
+      border-radius: 44px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.15);
+      position: relative; overflow: hidden;
+      flex-shrink: 0;
+    }
+    .phone-notch {
+      width: 80px; height: 28px;
+      background: var(--fg);
+      border-radius: 0 0 18px 18px;
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    }
+
+    /* ─── CHART BARS ANIMATION ─── */
+    .bar { animation: grow 1.4s cubic-bezier(.22,1,.36,1) forwards; transform-origin: bottom; transform: scaleY(0); }
+    @keyframes grow { to { transform: scaleY(1); } }
+    .bar:nth-child(1) { animation-delay: 0.1s; }
+    .bar:nth-child(2) { animation-delay: 0.2s; }
+    .bar:nth-child(3) { animation-delay: 0.3s; }
+    .bar:nth-child(4) { animation-delay: 0.4s; }
+    .bar:nth-child(5) { animation-delay: 0.5s; }
+
+    /* ─── FEATURE ICON RING ─── */
+    .icon-ring {
+      width: 56px; height: 56px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+
+    /* ─── SECTION DIVIDER ─── */
+    .section-divider {
+      width: 48px; height: 3px; border-radius: 2px;
+      background: var(--accent);
+    }
+
+    /* ─── STAT PILL ─── */
+    .stat-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 980px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 13px; font-weight: 500;
+      color: var(--fg-muted);
+      backdrop-filter: blur(8px);
+    }
+    .stat-pill span { color: var(--fg); font-weight: 700; }
+
+    /* ─── AVATAR RING ─── */
+    .avatar-ring {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, #0071e3, #30d158);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 700; color: #fff;
+      box-shadow: 0 4px 24px rgba(0,113,227,0.3);
+      flex-shrink: 0;
+    }
+
+    /* ─── FOOTER GRADIENT ─── */
+    .footer-rule {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    /* ─── TOGGLE ─── */
+    #mode-toggle { cursor: pointer; transition: transform 0.22s; }
+    #mode-toggle:hover { transform: rotate(20deg) scale(1.15); }
+
+    /* ─── MOBILE MENU ─── */
+    #mobile-menu { transition: max-height 0.35s cubic-bezier(.22,1,.36,1), opacity 0.3s; }
+
+    /* ─── GLOW DOT ─── */
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent2);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 0 0 rgba(48,209,88,0.5); }
+      50%      { box-shadow: 0 0 0 5px rgba(48,209,88,0); }
+    }
+
+    /* ─── SHIMMER BORDER ─── */
+    .shimmer-border {
+      position: relative;
+      border-radius: var(--radius);
+    }
+    .shimmer-border::before {
+      content: ''; position: absolute; inset: -1px;
+      border-radius: calc(var(--radius) + 1px);
+      background: linear-gradient(135deg, var(--accent) 0%, transparent 60%, var(--accent2) 100%);
+      z-index: -1; opacity: 0.5;
+    }
+
+    @media (max-width: 640px) {
+      .orb-1 { width: 280px; height: 280px; }
+      .orb-2 { width: 200px; height: 200px; }
+      .phone-frame { width: 180px; height: 360px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  NAV                                               -->
+<!-- ══════════════════════════════════════════════════ -->
+<nav>
+  <div class="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2 text-[15px] font-semibold tracking-tight" style="color:var(--fg)">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <rect width="26" height="26" rx="7" fill="var(--accent)"/>
+        <path d="M7 19L10.5 10L13 16L15.5 12L19 19" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="19" cy="8" r="2.5" fill="#30d158"/>
+      </svg>
+      SyncSpend
+    </a>
+
+    <!-- Desktop nav links -->
+    <div class="hidden md:flex items-center gap-8 text-[14px]" style="color:var(--fg-muted)">
+      <a href="#features" class="hover:text-[color:var(--fg)] transition-colors">Features</a>
+      <a href="#dashboard" class="hover:text-[color:var(--fg)] transition-colors">Dashboard</a>
+      <a href="#about" class="hover:text-[color:var(--fg)] transition-colors">About</a>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+      <button id="mode-toggle" aria-label="Toggle dark mode" class="text-[color:var(--fg-muted)] hover:text-[color:var(--fg)]">
+        <svg id="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="moon-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <a href="#download" class="hidden md:inline-flex btn-primary text-[13px] py-[9px] px-5 gap-1.5">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </a>
+      <!-- Hamburger -->
+      <button id="menu-btn" class="md:hidden p-2" style="color:var(--fg-muted)" aria-label="Menu">
+        <svg id="ham-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg id="ham-close" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="max-h-0 opacity-0 overflow-hidden md:hidden px-5 pb-0">
+    <div class="border-t pt-4 pb-5 flex flex-col gap-4 text-[15px]" style="border-color:var(--border); color:var(--fg-muted)">
+      <a href="#features" class="mobile-link">Features</a>
+      <a href="#dashboard" class="mobile-link">Dashboard</a>
+      <a href="#about" class="mobile-link">About</a>
+      <a href="#download" class="btn-primary w-fit mt-1">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download APK
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  HERO                                              -->
+<!-- ══════════════════════════════════════════════════ -->
+<section class="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden px-5 pt-24 pb-32">
+
+  <!-- Background orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Status pill -->
+  <div class="reveal flex items-center gap-2 stat-pill mb-8">
+    <div class="live-dot"></div>
+    <span>Now available</span> &mdash; <span>Free to Download</span>
+  </div>
+
+  <!-- Main headline -->
+  <h1 class="reveal reveal-delay-1 display text-[clamp(3rem,9vw,7.5rem)] leading-[1.04] tracking-[-0.03em] max-w-4xl" style="color:var(--fg)">
+    Master your money.<br />
+    <em class="gradient-text not-italic">Sync your spend.</em>
+  </h1>
+
+  <!-- Subheadline -->
+  <p class="reveal reveal-delay-2 text-[clamp(1rem,2.5vw,1.25rem)] max-w-xl mt-6 leading-relaxed" style="color:var(--fg-muted)">
+    A finance tracker built for people who care about clarity. Log every rupee, spot every pattern, and stay in control — with zero friction and total privacy.
+  </p>
+
+  <!-- CTA -->
+  <div class="reveal reveal-delay-3 flex flex-wrap items-center justify-center gap-4 mt-10">
+    <a id="download" href="YOUR_APK_LINK_HERE" class="btn-primary text-[16px]">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download APK
+    </a>
+    <a href="#features" class="btn-secondary text-[15px]">
+      Explore features
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </a>
+  </div>
+
+  <!-- Phone mockup + floating card -->
+  <div class="reveal reveal-delay-4 relative mt-20 flex items-end justify-center gap-6">
+
+    <!-- Phone -->
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <!-- Screen content -->
+      <div class="absolute inset-x-0 top-10 bottom-0 p-4 flex flex-col gap-3">
+        <div class="text-[11px] font-semibold mt-1" style="color:var(--fg-muted)">Total Spent — June</div>
+        <div class="text-[22px] font-bold leading-none" style="color:var(--fg)">₹18,420</div>
+        <!-- Mini bar chart -->
+        <div class="flex items-end gap-1.5 h-20 mt-2">
+          <div class="bar flex-1 rounded-t-md" style="height:55%; background:var(--accent); opacity:0.5"></div>
+          <div class="bar flex-1 rounded-t-md" style="height:80%; background:var(--accent)"></div>
+          <div class="bar flex-1 rounded-t-md" style="height:65%; background:var(--accent); opacity:0.7"></div>
+          <div class="bar flex-1 rounded-t-md" style="height:90%; background:var(--accent)"></div>
+          <div class="bar flex-1 rounded-t-md" style="height:50%; background:var(--accent); opacity:0.55"></div>
+        </div>
+        <!-- Category pills -->
+        <div class="flex flex-wrap gap-1.5 mt-1">
+          <div class="rounded-full px-2 py-0.5 text-[9px] font-medium" style="background:rgba(0,113,227,0.15); color:var(--accent)">🍔 Food</div>
+          <div class="rounded-full px-2 py-0.5 text-[9px] font-medium" style="background:rgba(48,209,88,0.15); color:var(--accent2)">🚌 Travel</div>
+          <div class="rounded-full px-2 py-0.5 text-[9px] font-medium" style="background:rgba(191,90,242,0.15); color:#bf5af2">🛍 Shopping</div>
+        </div>
+        <!-- Recent expense -->
+        <div class="mt-auto rounded-2xl p-3" style="background:var(--border)">
+          <div class="text-[10px]" style="color:var(--fg-muted)">Latest</div>
+          <div class="flex items-center justify-between mt-0.5">
+            <div class="text-[12px] font-semibold" style="color:var(--fg)">Chai &amp; Samosa</div>
+            <div class="text-[12px] font-bold" style="color:var(--accent)">-₹40</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating stat card (desktop only) -->
+    <div class="hidden sm:block glass-card px-5 py-4 absolute -right-8 top-16 w-44">
+      <div class="text-[11px] font-medium mb-1" style="color:var(--fg-muted)">This Week</div>
+      <div class="text-[24px] font-bold" style="color:var(--fg)">₹4,210</div>
+      <div class="flex items-center gap-1.5 mt-1">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#30d158" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+        <span class="text-[12px] font-medium" style="color:#30d158">12% less</span>
+      </div>
+    </div>
+
+    <!-- Floating notification (desktop only) -->
+    <div class="hidden sm:block glass-card px-4 py-3 absolute -left-12 bottom-12 w-52">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-[16px]" style="background:rgba(0,113,227,0.12)">🔔</div>
+        <div>
+          <div class="text-[11px] font-semibold" style="color:var(--fg)">Budget Alert</div>
+          <div class="text-[10px]" style="color:var(--fg-muted)">Food 80% reached</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  STATS BAR                                         -->
+<!-- ══════════════════════════════════════════════════ -->
+<section class="py-12 px-5">
+  <div class="max-w-4xl mx-auto glass-card px-8 py-6 flex flex-wrap justify-around gap-6 text-center">
+    <div class="reveal">
+      <div class="text-[2rem] font-bold display" style="color:var(--fg)">100%</div>
+      <div class="text-[13px] mt-1" style="color:var(--fg-muted)">Offline — No cloud needed</div>
+    </div>
+    <div class="reveal reveal-delay-1">
+      <div class="text-[2rem] font-bold display" style="color:var(--fg)">0</div>
+      <div class="text-[13px] mt-1" style="color:var(--fg-muted)">Ads or trackers</div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="text-[2rem] font-bold display" style="color:var(--fg)">∞</div>
+      <div class="text-[13px] mt-1" style="color:var(--fg-muted)">Expenses you can log</div>
+    </div>
+    <div class="reveal reveal-delay-3">
+      <div class="text-[2rem] font-bold display" style="color:var(--fg)">2s</div>
+      <div class="text-[13px] mt-1" style="color:var(--fg-muted)">Average log time</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  FEATURES                                          -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="features" class="py-28 px-5">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Section header -->
+    <div class="text-center mb-20">
+      <div class="reveal section-divider mx-auto mb-6"></div>
+      <h2 class="reveal reveal-delay-1 display text-[clamp(2rem,5vw,3.5rem)] leading-tight tracking-[-0.02em]" style="color:var(--fg)">
+        Designed for <em class="gradient-text not-italic">clarity</em>.
+      </h2>
+      <p class="reveal reveal-delay-2 text-[17px] mt-4 max-w-xl mx-auto leading-relaxed" style="color:var(--fg-muted)">
+        Every feature exists to remove friction — not add it.
+      </p>
+    </div>
+
+    <!-- 3-column grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Feature 1 -->
+      <div class="reveal glass-card shimmer-border p-8 flex flex-col gap-5">
+        <div class="icon-ring" style="background:rgba(0,113,227,0.12)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 17V11M12 17V7M15 17v-5"/></svg>
+        </div>
+        <div>
+          <h3 class="text-[19px] font-semibold tracking-tight" style="color:var(--fg)">Apple-Grade Dashboard</h3>
+          <p class="text-[14.5px] mt-2 leading-relaxed" style="color:var(--fg-muted)">Dynamic charts that morph and adapt to your real spending patterns. Weekly, monthly, or category-wise — always gorgeous, always instant.</p>
+        </div>
+        <div class="mt-auto flex items-center gap-2 text-[13px] font-medium" style="color:var(--accent)">
+          Visual intelligence
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+      </div>
+
+      <!-- Feature 2 (accent) -->
+      <div class="reveal reveal-delay-1 rounded-[20px] p-8 flex flex-col gap-5 relative overflow-hidden" style="background:var(--accent)">
+        <div class="absolute inset-0 opacity-20" style="background:radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%)"></div>
+        <div class="icon-ring relative" style="background:rgba(255,255,255,0.18)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <h3 class="text-[19px] font-semibold text-white tracking-tight">Privacy First</h3>
+          <p class="text-[14.5px] mt-2 leading-relaxed text-white/75">Completely offline with a local <strong class="text-white">Isar database</strong>. Your financial data never leaves your device. No servers, no sync, no surveillance.</p>
+        </div>
+        <div class="mt-auto flex items-center gap-2 text-[13px] font-medium text-white/90">
+          Zero data leakage
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="reveal reveal-delay-2 glass-card p-8 flex flex-col gap-5">
+        <div class="icon-ring" style="background:rgba(48,209,88,0.12)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div>
+          <h3 class="text-[19px] font-semibold tracking-tight" style="color:var(--fg)">Quick Log</h3>
+          <p class="text-[14.5px] mt-2 leading-relaxed" style="color:var(--fg-muted)">Log any expense in under 2 seconds with a tactile, satisfying popup interface. Amount, category, note — done before you pocket your phone.</p>
+        </div>
+        <div class="mt-auto flex items-center gap-2 text-[13px] font-medium" style="color:var(--accent2)">
+          Tap, type, done
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional features row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+      <div class="reveal glass-card p-7 flex items-start gap-5">
+        <div class="icon-ring flex-shrink-0" style="background:rgba(191,90,242,0.12)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#bf5af2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div>
+          <h4 class="text-[16px] font-semibold" style="color:var(--fg)">Smart Budget Alerts</h4>
+          <p class="text-[13.5px] mt-1 leading-relaxed" style="color:var(--fg-muted)">Set monthly budgets per category. Get notified before you overshoot — not after.</p>
+        </div>
+      </div>
+      <div class="reveal reveal-delay-1 glass-card p-7 flex items-start gap-5">
+        <div class="icon-ring flex-shrink-0" style="background:rgba(255,159,10,0.12)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        </div>
+        <div>
+          <h4 class="text-[16px] font-semibold" style="color:var(--fg)">Exportable Reports</h4>
+          <p class="text-[13.5px] mt-1 leading-relaxed" style="color:var(--fg-muted)">Export monthly summaries as PDF or CSV. Clean, share-ready reports for any purpose.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  DASHBOARD PREVIEW                                 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="dashboard" class="py-28 px-5 relative overflow-hidden">
+  <div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,#0071e3 0%,transparent 70%);top:-100px;right:-200px;opacity:0.12;filter:blur(100px);"></div>
+
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col lg:flex-row items-center gap-16">
+      <!-- Text -->
+      <div class="flex-1 text-center lg:text-left">
+        <div class="reveal section-divider mb-6 mx-auto lg:mx-0"></div>
+        <h2 class="reveal reveal-delay-1 display text-[clamp(2rem,4.5vw,3.2rem)] leading-tight tracking-[-0.02em]" style="color:var(--fg)">
+          Your money,<br/><em class="gradient-text not-italic">visualised beautifully.</em>
+        </h2>
+        <p class="reveal reveal-delay-2 text-[17px] mt-5 leading-relaxed" style="color:var(--fg-muted)">
+          The dashboard isn't just a chart dump. It's a living financial portrait — showing you what matters, hiding what doesn't.
+        </p>
+        <ul class="reveal reveal-delay-3 mt-8 flex flex-col gap-4 text-left">
+          <li class="flex items-start gap-3">
+            <div class="mt-1 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background:var(--accent)">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span class="text-[15px]" style="color:var(--fg-muted)">Donut, bar, and line charts — auto-generated from your data</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <div class="mt-1 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background:var(--accent)">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span class="text-[15px]" style="color:var(--fg-muted)">Daily, weekly, and monthly breakdowns at a glance</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <div class="mt-1 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background:var(--accent)">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span class="text-[15px]" style="color:var(--fg-muted)">Category-smart colour coding that just makes sense</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Dashboard card -->
+      <div class="reveal reveal-delay-2 flex-1 w-full max-w-md">
+        <div class="glass-card shimmer-border p-7">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <div class="text-[12px] font-medium uppercase tracking-widest" style="color:var(--fg-muted)">July 2025</div>
+              <div class="text-[28px] font-bold tracking-tight" style="color:var(--fg)">₹24,680</div>
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium" style="background:rgba(48,209,88,0.12);color:var(--accent2)">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+              8% vs last month
+            </div>
+          </div>
+
+          <!-- SVG donut chart -->
+          <div class="flex items-center gap-6 mb-6">
+            <svg width="90" height="90" viewBox="0 0 36 36" class="flex-shrink-0">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border)" stroke-width="4"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="38 88" stroke-dashoffset="-22" stroke-linecap="round"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#30d158" stroke-width="4" stroke-dasharray="22 88" stroke-dashoffset="-60" stroke-linecap="round"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#bf5af2" stroke-width="4" stroke-dasharray="16 88" stroke-dashoffset="-82" stroke-linecap="round"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#ff9f0a" stroke-width="4" stroke-dasharray="12 88" stroke-dashoffset="-98" stroke-linecap="round"/>
+            </svg>
+            <div class="flex flex-col gap-2 text-[13px]">
+              <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:var(--accent)"></div><span style="color:var(--fg-muted)">Food</span><span class="ml-auto font-semibold" style="color:var(--fg)">43%</span></div>
+              <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:#30d158"></div><span style="color:var(--fg-muted)">Travel</span><span class="ml-auto font-semibold" style="color:var(--fg)">25%</span></div>
+              <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:#bf5af2"></div><span style="color:var(--fg-muted)">Shopping</span><span class="ml-auto font-semibold" style="color:var(--fg)">18%</span></div>
+              <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:#ff9f0a"></div><span style="color:var(--fg-muted)">Other</span><span class="ml-auto font-semibold" style="color:var(--fg)">14%</span></div>
+            </div>
+          </div>
+
+          <!-- Weekly mini chart -->
+          <div class="pt-5" style="border-top:1px solid var(--border)">
+            <div class="text-[11px] font-medium mb-3" style="color:var(--fg-muted)">DAILY SPEND — THIS WEEK</div>
+            <div class="flex items-end gap-2 h-12">
+              <div class="flex-1 rounded-t" style="height:60%; background:var(--accent); opacity:0.45"></div>
+              <div class="flex-1 rounded-t" style="height:100%; background:var(--accent)"></div>
+              <div class="flex-1 rounded-t" style="height:40%; background:var(--accent); opacity:0.45"></div>
+              <div class="flex-1 rounded-t" style="height:75%; background:var(--accent); opacity:0.7"></div>
+              <div class="flex-1 rounded-t" style="height:55%; background:var(--accent); opacity:0.55"></div>
+              <div class="flex-1 rounded-t" style="height:85%; background:var(--accent)"></div>
+              <div class="flex-1 rounded-t" style="height:30%; background:var(--accent); opacity:0.35"></div>
+            </div>
+            <div class="flex justify-between mt-1.5 text-[10px]" style="color:var(--fg-muted)">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  ABOUT / A4STUDIOS                                 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="about" class="py-28 px-5">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="reveal section-divider mx-auto mb-6"></div>
+      <h2 class="reveal reveal-delay-1 display text-[clamp(2rem,5vw,3.2rem)] leading-tight tracking-[-0.02em]" style="color:var(--fg)">
+        Built with care by <em class="gradient-text not-italic">A4Studios</em>.
+      </h2>
+      <p class="reveal reveal-delay-2 text-[17px] mt-4" style="color:var(--fg-muted)">Two developers. One shared obsession with great software.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+      <!-- Alok -->
+      <div class="reveal glass-card p-8 flex flex-col gap-5">
+        <div class="flex items-center gap-4">
+          <div class="avatar-ring">A</div>
+          <div>
+            <div class="text-[18px] font-semibold" style="color:var(--fg)">Alok</div>
+            <div class="text-[13px] font-medium mt-0.5" style="color:var(--accent)">Lead Developer</div>
+          </div>
+        </div>
+        <p class="text-[14.5px] leading-relaxed" style="color:var(--fg-muted)">
+          Architect of SyncSpend's core engine. Passionate about Flutter, clean code, and building apps that feel native down to every scroll and tap.
+        </p>
+        <div class="flex gap-2 flex-wrap">
+          <span class="stat-pill">Flutter</span>
+          <span class="stat-pill">Dart</span>
+          <span class="stat-pill">Isar DB</span>
+        </div>
+      </div>
+
+      <!-- Aman -->
+      <div class="reveal reveal-delay-1 glass-card p-8 flex flex-col gap-5">
+        <div class="flex items-center gap-4">
+          <div class="avatar-ring" style="background:linear-gradient(135deg,#30d158,#0071e3)">A</div>
+          <div>
+            <div class="text-[18px] font-semibold" style="color:var(--fg)">Aman</div>
+            <div class="text-[13px] font-medium mt-0.5" style="color:var(--accent2)">Design & UX Lead</div>
+          </div>
+        </div>
+        <p class="text-[14.5px] leading-relaxed" style="color:var(--fg-muted)">
+          The eye behind SyncSpend's visual language. Inspired by Apple HIG and Figma craft — designing every pixel with intent, emotion, and clarity.
+        </p>
+        <div class="flex gap-2 flex-wrap">
+          <span class="stat-pill">Figma</span>
+          <span class="stat-pill">Motion</span>
+          <span class="stat-pill">UI/UX</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub CTA -->
+    <div class="reveal flex justify-center">
+      <a href="https://github.com/YOUR_GITHUB_USERNAME/syncspend" target="_blank" rel="noopener noreferrer"
+         class="glass-card shimmer-border flex items-center gap-4 px-8 py-5 group" style="text-decoration:none;max-width:420px;width:100%">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--fg)"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        <div>
+          <div class="text-[16px] font-semibold group-hover:text-[color:var(--accent)] transition-colors" style="color:var(--fg)">View on GitHub</div>
+          <div class="text-[13px]" style="color:var(--fg-muted)">A4Studios / SyncSpend — Open Source</div>
+        </div>
+        <svg class="ml-auto group-hover:translate-x-1 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  DOWNLOAD CTA                                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<section class="py-28 px-5 relative overflow-hidden">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,#0071e3 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.1;filter:blur(100px)"></div>
+  <div class="max-w-3xl mx-auto text-center relative">
+    <div class="reveal section-divider mx-auto mb-6"></div>
+    <h2 class="reveal reveal-delay-1 display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight tracking-[-0.03em]" style="color:var(--fg)">
+      Start today.<br/>
+      <em class="gradient-text not-italic">It's free.</em>
+    </h2>
+    <p class="reveal reveal-delay-2 text-[18px] mt-5 leading-relaxed" style="color:var(--fg-muted)">
+      Download the APK and take control of your finances — no account, no subscription, no nonsense.
+    </p>
+    <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+      <!-- ⬇️ REPLACE href WITH YOUR ACTUAL APK DOWNLOAD LINK -->
+      <a href="YOUR_APK_LINK_HERE" class="btn-primary text-[17px] px-10 py-4">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download APK — Free
+      </a>
+      <div class="text-[13px]" style="color:var(--fg-muted)">Android 7.0+ · ~15 MB · No permissions required</div>
+    </div>
+    <p class="reveal reveal-delay-4 text-[12px] mt-6" style="color:var(--fg-muted)">
+      Built with Flutter · Powered by Isar · Made in India 🇮🇳
+    </p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  FOOTER                                            -->
+<!-- ══════════════════════════════════════════════════ -->
+<footer class="px-5 pb-10 pt-8">
+  <div class="max-w-6xl mx-auto">
+    <div class="footer-rule mb-8"></div>
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px]" style="color:var(--fg-muted)">
+      <div class="flex items-center gap-2">
+        <svg width="20" height="20" viewBox="0 0 26 26" fill="none"><rect width="26" height="26" rx="7" fill="var(--accent)"/><path d="M7 19L10.5 10L13 16L15.5 12L19 19" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19" cy="8" r="2.5" fill="#30d158"/></svg>
+        <span><strong style="color:var(--fg)">SyncSpend</strong> — A4Studios © 2025</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="#features" style="color:var(--fg-muted)" class="hover:text-[color:var(--fg)] transition-colors">Features</a>
+        <a href="#about" style="color:var(--fg-muted)" class="hover:text-[color:var(--fg)] transition-colors">About</a>
+        <a href="https://github.com/YOUR_GITHUB_USERNAME/syncspend" target="_blank" rel="noopener noreferrer" style="color:var(--fg-muted)" class="hover:text-[color:var(--fg)] transition-colors">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  JS                                                -->
+<!-- ══════════════════════════════════════════════════ -->
+<script>
+  // ── DARK MODE TOGGLE ──
+  const html = document.documentElement;
+  const toggleBtn = document.getElementById('mode-toggle');
+  const sunIcon = document.getElementById('sun-icon');
+  const moonIcon = document.getElementById('moon-icon');
+
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    html.classList.add('dark');
+    sunIcon.classList.add('hidden');
+    moonIcon.classList.remove('hidden');
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    const isDark = html.classList.toggle('dark');
+    sunIcon.classList.toggle('hidden', isDark);
+    moonIcon.classList.toggle('hidden', !isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+
+  // ── MOBILE MENU ──
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const hamOpen = document.getElementById('ham-open');
+  const hamClose = document.getElementById('ham-close');
+  let menuOpen = false;
+
+  menuBtn.addEventListener('click', () => {
+    menuOpen = !menuOpen;
+    mobileMenu.style.maxHeight = menuOpen ? mobileMenu.scrollHeight + 'px' : '0';
+    mobileMenu.style.opacity = menuOpen ? '1' : '0';
+    mobileMenu.style.paddingBottom = menuOpen ? '20px' : '0';
+    hamOpen.classList.toggle('hidden', menuOpen);
+    hamClose.classList.toggle('hidden', !menuOpen);
+  });
+
+  // Close on link click
+  document.querySelectorAll('.mobile-link').forEach(link => {
+    link.addEventListener('click', () => {
+      menuOpen = false;
+      mobileMenu.style.maxHeight = '0';
+      mobileMenu.style.opacity = '0';
+      mobileMenu.style.paddingBottom = '0';
+      hamOpen.classList.remove('hidden');
+      hamClose.classList.add('hidden');
+    });
+  });
+
+  // ── SCROLL REVEAL ──
+  const revealElements = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  revealElements.forEach(el => observer.observe(el));
+
+  // Trigger hero reveals on load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.querySelectorAll('section:first-of-type .reveal').forEach(el => {
+        el.classList.add('visible');
+      });
+    }, 100);
+  });
+</script>
+
+</body>
+</html>
